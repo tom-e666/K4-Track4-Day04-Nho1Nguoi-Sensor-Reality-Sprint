@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thuyết trình sức khỏe camera</title>
+<style>
+:root{--bg:#0f1420;--panel:#171e2e;--line:#2a3550;--text:#eef2fb;--mute:#9aa7c4;--accent:#5aa9ff;--bad:#ff6b6b;--good:#4fd08a;--warn:#ffc04d}
+@media (prefers-color-scheme:light){:root{--bg:#f4f6fb;--panel:#fff;--line:#d9e0ef;--text:#14192b;--mute:#566080;--accent:#1565d8;--bad:#d62f2f;--good:#17894f;--warn:#b86e00}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:clamp(15px,1.7vw,24px)/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+.slide{position:absolute;inset:0;padding:5vh 6vw 8vh;display:none;flex-direction:column;gap:2vh;overflow:auto}
+.slide.on{display:flex}
+h1{font-size:2.3em;line-height:1.1;margin:0;letter-spacing:-.02em}
+h2{font-size:1.6em;margin:0;letter-spacing:-.01em}
+.kicker{color:var(--accent);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.6em}
+.mute{color:var(--mute)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:2.5vw;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:1.2em 1.4em}
+ul{margin:.3em 0 0;padding-left:1.1em}li{margin:.35em 0}
+img{max-width:100%;max-height:52vh;border-radius:12px;border:1px solid var(--line);background:#fff;display:block;margin:0 auto}
+.big{font-size:2.6em;font-weight:800;letter-spacing:-.03em;line-height:1}
+.bad{color:var(--bad)}.good{color:var(--good)}.warn{color:var(--warn)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5vw}
+.kpis .card small{display:block;color:var(--mute);margin-top:.4em;font-size:.65em}
+table{border-collapse:collapse;width:100%;font-size:.7em}
+th,td{padding:.4em .6em;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}th{color:var(--mute);font-weight:600}
+code{background:var(--panel);border:1px solid var(--line);padding:.05em .35em;border-radius:6px;font-size:.88em}
+.tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:.05em .6em;font-size:.6em;color:var(--mute);margin-right:.4em}
+.hud{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:center;padding:1.2vh 2vw;font-size:.6em;color:var(--mute);background:linear-gradient(transparent,var(--bg) 60%)}
+.bar{position:fixed;left:0;top:0;height:4px;background:var(--accent);transition:width .25s}
+.hud button{background:none;border:1px solid var(--line);color:var(--mute);border-radius:8px;padding:.2em .7em;cursor:pointer;font:inherit}
+@media(max-width:760px){.cols,.kpis{grid-template-columns:1fr}}
+@media print{html,body{overflow:visible;height:auto}.slide{position:static;display:flex;min-height:100vh;break-after:page}.hud,.bar{display:none}}
+</style>
+</head>
+<body>
+<div class="bar" id="bar"></div>
+
+<!-- 1 Title -->
+<section class="slide on">
+  <div class="kicker">Ngày 19 · AI Sensor · Chủ đề T1</div>
+  <h1>Điểm sức khỏe camera khi suy giảm chất lượng (ADAS)</h1>
+  <p class="mute">Camera có thể hỏng nặng trong khi detector vẫn tỏ ra tự tin.</p>
+  <div><span class="tag">Camera phía trước xe ADAS</span><span class="tag">9 mức lỗi có kiểm soát</span><span class="tag">Chạy code gốc BREMOLA</span><span class="tag">YOLOv8n làm proxy</span></div>
+  <p class="mute" style="margin-top:auto">Vấn đề → Phương pháp → Benchmark → Trường hợp lỗi → Quyết định · ~4 phút</p>
+</section>
+
+<!-- 2 Problem -->
+<section class="slide">
+  <div class="kicker">0:00 · Vấn đề</div>
+  <h2>Độ tự tin của detector không phải thước đo sức khỏe camera</h2>
+  <div class="cols">
+    <div class="card"><b>Rủi ro</b>
+      <ul><li>Mờ, chói sáng và nhiễu làm hỏng <i>chính dữ liệu đầu vào</i>.</li>
+      <li>Tính năng bị ảnh hưởng: nhận diện vật thể cấp cho các chức năng như phanh khẩn cấp (AEB) và ga tự động (ACC).</li>
+      <li>Nếu chỉ nhìn đầu ra của detector, hệ thống có thể không biết cảm biến đã kém tin cậy.</li></ul></div>
+    <div class="card"><b>Các nguồn tham khảo báo cáo</b> <span class="tag">không phải số của nhóm</span>
+      <ul><li>Dong và cộng sự, CVPR 2023: 27 loại lỗi trên KITTI-C / nuScenes-C / Waymo-C.</li>
+      <li>RoboBEV, TPAMI 2025: 8 loại lỗi camera × 3 mức nặng, 33 mô hình BEV.</li>
+      <li>Cả hai đều ghi nhận hiệu năng giảm rõ rệt.</li></ul></div>
+  </div>
+  <div class="card"><b>Câu hỏi của nhóm</b> — Một bộ giám sát nhẹ có thể phát hiện khung hình suy giảm <i>độc lập với detector</i> không, và nó sai ở đâu?</div>
+</section>
+
+<!-- 3 Method -->
+<section class="slide">
+  <div class="kicker">0:35 · Phương pháp</div>
+  <h2>Một ảnh, mỗi lần một lỗi, cùng một bộ metric cho mọi điều kiện</h2>
+  <div class="cols">
+    <div class="card"><b>9 điều kiện lỗi + ảnh sạch làm mốc</b>
+      <ul><li>Làm mờ Gaussian: kernel 5 / 11 / 21</li>
+      <li>Chói sáng (glare): hệ số 0.35 / 0.70 / 1.05</li>
+      <li>Nhiễu muối tiêu: 0.5% / 1% / 2.5% pixel, seed 19</li></ul>
+      <p class="mute" style="font-size:.7em">Ảnh đầu vào: <code>bus.jpg</code> công khai (810×1080). Mọi tham số lưu trong <code>summary.json</code>.</p></div>
+    <div class="card"><b>Nhóm đo gì</b>
+      <ul><li><b>Điểm sức khỏe</b>: Laplacian, cạnh, độ cháy sáng, độ sáng, tương phản; ngưỡng 0.65</li>
+      <li><b>BREMOLA</b>: chạy nguyên code của tác giả paper, ghim commit, không sửa</li>
+      <li><b>YOLOv8n</b>: số box, độ tự tin trung bình, mức khớp với box của chính nó trên ảnh sạch (<span class="warn">không phải recall</span>)</li></ul></div>
+  </div>
+</section>
+
+<!-- 4 Blur result -->
+<section class="slide">
+  <div class="kicker">1:20 · Benchmark</div>
+  <h2>Blur k=21: ảnh sụp đổ nhưng độ tự tin lại tăng</h2>
+  <div class="kpis">
+    <div class="card"><div class="big bad">−99.9%</div><small>Phương sai Laplacian 3619 → 3.4</small></div>
+    <div class="card"><div class="big bad">4%</div><small>giữ lại cạnh so với ảnh sạch · điểm sức khỏe 0.44 (SUY GIẢM)</small></div>
+    <div class="card"><div class="big warn">+3.0%</div><small>Độ tự tin trung bình YOLO 0.656 → 0.675</small></div>
+  </div>
+  <div class="cols">
+    <div class="card"><b>Vì sao độ tự tin tăng</b>
+      <ul><li>Số box vẫn là 6 → 6, nhưng các box đã đổi.</li>
+      <li>Mất: <code>stop sign 0.26</code>. Mới: <code>dog 0.36</code> (sai).</li>
+      <li>Một box sai có điểm cao hơn box yếu mà nó thay thế.</li></ul></div>
+    <div class="card"><b>Hiện tượng tương tự với nhiễu nhẹ</b>
+      <ul><li>Nhiễu 0.5%: thay đổi duy nhất là một box yếu biến mất.</li>
+      <li>Độ tự tin trung bình <span class="warn">+13%</span>.</li>
+      <li>Nó dao động vì những lý do không liên quan đến sức khỏe ảnh.</li></ul></div>
+  </div>
+</section>
+
+<!-- 5 Full table -->
+<section class="slide">
+  <div class="kicker">Benchmark · toàn bộ điều kiện</div>
+  <h2>Kết quả nhóm tự đo</h2>
+  <div style="overflow:auto"><table>
+    <tr><th>Điều kiện</th><th>Laplacian</th><th>Cháy sáng</th><th>Giữ cạnh</th><th>BREMOLA</th><th>Sức khỏe</th><th>Trạng thái</th><th>Box</th><th>Tự tin</th><th>Khớp ảnh sạch</th></tr>
+    <tr><td>ảnh sạch</td><td>3619</td><td>1.3%</td><td>100%</td><td>38.9</td><td>1.000</td><td class="good">OK</td><td>6</td><td>0.656</td><td>100%</td></tr>
+    <tr><td>mờ k5</td><td>122</td><td>0.5%</td><td>48%</td><td>29.3</td><td>0.529</td><td class="bad">SUY GIẢM</td><td>6</td><td>0.653</td><td>100%</td></tr>
+    <tr><td>mờ k11</td><td>13</td><td>0.4%</td><td>15%</td><td>29.6</td><td>0.465</td><td class="bad">SUY GIẢM</td><td>6</td><td>0.662</td><td>83%</td></tr>
+    <tr><td>mờ k21</td><td>3.4</td><td>0.2%</td><td>4%</td><td>28.6</td><td>0.444</td><td class="bad">SUY GIẢM</td><td>6</td><td>0.675</td><td>83%</td></tr>
+    <tr><td>chói 0.35</td><td>3500</td><td>5.0%</td><td>99%</td><td>39.1</td><td>0.940</td><td class="good">OK</td><td>6</td><td>0.655</td><td>100%</td></tr>
+    <tr><td>chói 0.70</td><td>3130</td><td>11.4%</td><td>96%</td><td>39.4</td><td>0.803</td><td class="good">OK</td><td>6</td><td>0.643</td><td>100%</td></tr>
+    <tr><td>chói 1.05</td><td>2790</td><td>20.0%</td><td>87%</td><td>40.4</td><td>0.636</td><td class="bad">SUY GIẢM</td><td>7</td><td>0.549</td><td>83%</td></tr>
+    <tr><td>nhiễu 0.5%</td><td>5736</td><td>1.5%</td><td>110%</td><td>41.0</td><td>0.832</td><td class="good">OK</td><td>5</td><td>0.741</td><td>83%</td></tr>
+    <tr><td>nhiễu 1.0%</td><td>7810</td><td>1.8%</td><td>118%</td><td>41.4</td><td>0.749</td><td class="good">OK</td><td>5</td><td>0.719</td><td>83%</td></tr>
+    <tr><td>nhiễu 2.5%</td><td>13968</td><td>2.5%</td><td>139%</td><td>40.5</td><td>0.629</td><td class="bad">SUY GIẢM</td><td>6</td><td>0.597</td><td>83%</td></tr>
+  </table></div>
+  <p class="mute" style="font-size:.7em">BREMOLA giảm 25% ở k5 rồi đi ngang, và tăng nhẹ khi có chói/nhiễu — phù hợp với phạm vi chỉ-xét-blur của paper. Nguồn: <code>results/metrics.csv</code>.</p>
+</section>
+
+<!-- 6 Failure case -->
+<section class="slide">
+  <div class="kicker">2:30 · Trường hợp lỗi</div>
+  <h2>Chói sáng: detector mất xe buýt, và bộ giám sát của nhóm phản ứng quá yếu</h2>
+  <img data-src="results/detector_before_after.png" alt="YOLO trên ảnh sạch và ảnh chói 1.05">
+  <div class="cols">
+    <div class="card"><b>Đã đo</b>
+      <ul><li>Pixel cháy sáng 1.3% → <span class="bad">20%</span>.</li>
+      <li>Mất <code>bus 0.87</code> → xuất hiện <code>airplane 0.45</code> + <code>truck 0.29</code>.</li>
+      <li>Ở mức 0.70 (11% pixel cháy sáng), điểm sức khỏe vẫn báo <span class="warn">OK (0.80)</span>.</li></ul></div>
+    <div class="card"><b>Vì sao</b>
+      <ul><li>Thành phần cháy sáng chỉ có trọng số 0.25 → riêng glare không thể kéo điểm H xuống dưới 0.75.</li>
+      <li><span class="tag">giả thuyết</span>Xe phía trước bị nhận nhầm lớp có thể làm thay đổi quyết định phanh AEB. Chưa kiểm chứng.</li></ul></div>
+  </div>
+</section>
+
+<!-- 7 Policy -->
+<section class="slide">
+  <div class="kicker">Quyết định · tính bền vững</div>
+  <h2>3 khung xấu liên tiếp: cảnh báo nhầm do lỗi thoáng qua từ 3 → 0</h2>
+  <img data-src="results/policy_timeline.png" alt="Dòng thời gian của quy tắc">
+  <div class="cols">
+    <div class="card"><b>Đã đo</b> trên chuỗi 23 khung tổng hợp: 1 khung chói thoáng qua + 2 khung nhiễu, sau đó mờ kéo dài.
+      <ul><li>Quy tắc 1 khung: 3 cảnh báo nhầm.</li><li>Quy tắc 3 khung: <span class="good">0</span>.</li></ul></div>
+    <div class="card"><b>Cái giá phải trả</b>
+      <ul><li>Báo muộn 2 khung sau khi mờ bắt đầu (~67 ms ở 30 fps).</li>
+      <li class="mute">Các khung dùng lại biến thể của một ảnh. Không phải video thật.</li></ul></div>
+  </div>
+</section>
+
+<!-- 8 Decision -->
+<section class="slide">
+  <div class="kicker">3:30 · Quyết định kỹ thuật</div>
+  <h2>Nhóm sẽ làm gì, và kiểm chứng thế nào</h2>
+  <div class="cols">
+    <div class="card"><b>Quyết định</b>
+      <ol style="margin:.3em 0 0;padding-left:1.2em"><li>Không dùng độ tự tin của detector làm tín hiệu sức khỏe camera.</li>
+      <li>Thêm quy tắc riêng cho glare (độ cháy sáng) bên cạnh điểm tổng hợp.</li>
+      <li>Giữ quy tắc 3 khung liên tiếp.</li>
+      <li>Thay ảnh sạch tham chiếu bằng tham chiếu cuốn chiếu từ các khung khỏe gần nhất.</li></ol>
+      <p class="mute" style="font-size:.7em">Khi lỗi kéo dài: ghi log, giảm trọng số camera trong fusion, yêu cầu chế độ an toàn hơn. Repo này không cài fusion/điều khiển.</p></div>
+    <div class="card"><b>Kiểm chứng ở vòng sau</b>
+      <ul><li>Tỉ lệ cảnh báo theo từng mức glare trên ≥20 ảnh</li>
+      <li>Chạy quy tắc trên video thật có gán nhãn đoạn lỗi</li>
+      <li>Recall thật trên một lát nuScenes-C có nhãn</li></ul></div>
+  </div>
+  <div class="card"><b>Giới hạn (nói thật)</b> · chỉ 1 ảnh phố chụp tay, không phải camera trên xe · lỗi tổng hợp · điểm sức khỏe cần ảnh sạch làm tham chiếu · trọng số chỉnh sau lần chạy đầu rồi cố định (bỏ lọt 2 trong 4 mức nhẹ mới) · không có ground truth nên không tuyên bố mAP/recall.</div>
+</section>
+
+<!-- 9 Close -->
+<section class="slide">
+  <div class="kicker">4:20 · Kết luận</div>
+  <h1>Hãy giám sát sức khỏe cảm biến trước, và độc lập với, độ tự tin của perception.</h1>
+  <p class="mute">…và kiểm tra bộ giám sát ở những mức mà nó chưa được chỉnh cho.</p>
+  <div class="card" style="margin-top:auto"><b>Bằng chứng</b> · <code>results/metrics.csv</code> · <code>results/summary.json</code> · <code>REPORT.md</code> · repo <code>tom-e666/vin20kday19aisensor</code></div>
+</section>
+
+<div class="hud"><span id="n">1 / 9</span><span>← → / Space · F toàn màn hình · P in ra PDF</span><button id="fs">Toàn màn hình</button></div>
+
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;
+// Images resolve under GitHub Pages (docs/results) and locally (../results).
+document.querySelectorAll('img[data-src]').forEach(im=>{
+  const p=im.dataset.src;im.src=p;
+  im.onerror=()=>{im.onerror=null;im.src='../'+p};
+});
+function show(k){
+  i=Math.max(0,Math.min(slides.length-1,k));
+  slides.forEach((s,j)=>s.classList.toggle('on',j===i));
+  document.getElementById('n').textContent=(i+1)+' / '+slides.length;
+  document.getElementById('bar').style.width=((i+1)/slides.length*100)+'%';
+  try{history.replaceState(null,'','#'+(i+1))}catch(e){}
+}
+function fs(){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>{})}
+addEventListener('keydown',e=>{
+  if(['ArrowRight','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();show(i+1)}
+  else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();show(i-1)}
+  else if(e.key==='Home')show(0);else if(e.key==='End')show(slides.length-1);
+  else if(e.key==='f'||e.key==='F')fs();else if(e.key==='p'||e.key==='P')print();
+});
+addEventListener('click',e=>{if(e.target.closest('button,a'))return;show(e.clientX<innerWidth*.3?i-1:i+1)});
+document.getElementById('fs').onclick=fs;
+let tx=0;addEventListener('touchstart',e=>tx=e.touches[0].clientX);
+addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)show(i+(d<0?1:-1))});
+show((parseInt(location.hash.slice(1))||1)-1);
+</script>
+</body>
+</html>
