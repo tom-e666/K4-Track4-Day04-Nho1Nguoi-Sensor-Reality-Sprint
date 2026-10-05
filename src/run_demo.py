@@ -163,6 +163,7 @@ def save_metric_plot(rows: list[dict], out_dir: Path) -> None:
     plt.plot(x, [float(r["health_score"]) for r in rows], marker="o", label="health score")
     plt.plot(x, [min(float(r["edge_retention"]), 1.5) for r in rows],
              marker="o", label="edge retention")
+    plt.axhline(0.65, linestyle="--", linewidth=1.4, label="demo threshold 0.65")
     plt.xticks(x, labels, rotation=25, ha="right")
     plt.ylabel("normalized proxy")
     plt.title("Camera degradation health proxies")
@@ -217,11 +218,13 @@ def run(
         }
 
     rows: list[dict] = []
+    detector_frames: dict[str, np.ndarray] = {}
     for level, (name, img) in enumerate(variants(base)):
         row: dict = {"level": level, "condition": name, **raw_metrics(img)}
         if model is not None:
             n, c, annotated = yolo_metrics(model, img)
             row.update(detections=n, mean_confidence=c)
+            detector_frames[name] = annotated
             cv2.imwrite(str(out_dir / f"detector_{level}_{name}.jpg"), annotated)
         rows.append(row)
         cv2.imwrite(str(out_dir / f"{level}_{name}.jpg"), img)
@@ -242,6 +245,24 @@ def run(
     cv2.putText(canvas, "STRONG GLARE", (base.shape[1] + 20, 42),
                 cv2.FONT_HERSHEY_SIMPLEX, 1.1, (0, 0, 0), 3)
     cv2.imwrite(str(out_dir / "before_after.png"), canvas)
+
+    if "clean" in detector_frames and "strong_glare" in detector_frames:
+        clean_det = detector_frames["clean"]
+        glare_det = detector_frames["strong_glare"]
+        def titled(frame: np.ndarray, title: str) -> np.ndarray:
+            framed = cv2.copyMakeBorder(
+                frame, 58, 0, 0, 0, cv2.BORDER_CONSTANT, value=(255, 255, 255)
+            )
+            cv2.putText(
+                framed, title, (18, 39), cv2.FONT_HERSHEY_SIMPLEX,
+                1.0, (20, 20, 20), 2, cv2.LINE_AA
+            )
+            return framed
+        detector_compare = np.hstack([
+            titled(clean_det, "YOLO: CLEAN"),
+            titled(glare_det, "YOLO: STRONG GLARE"),
+        ])
+        cv2.imwrite(str(out_dir / "detector_before_after.png"), detector_compare)
 
     summary = {
         "input": source_name,
