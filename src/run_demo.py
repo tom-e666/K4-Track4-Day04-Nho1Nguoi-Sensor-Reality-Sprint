@@ -129,14 +129,15 @@ def add_relative_health(rows: list[dict[str, float | int | str]]) -> None:
         # Demo heuristic only. Weights are interpretable choices, not fitted
         # on a safety-labelled production dataset.
         health = (
-            0.35 * sharpness_similarity
-            + 0.20 * edge_similarity
-            + 0.15 * brightness_similarity
-            + 0.15 * contrast_similarity
-            + 0.15 * clipping_quality
+            0.40 * sharpness_similarity
+            + 0.15 * edge_similarity
+            + 0.10 * brightness_similarity
+            + 0.10 * contrast_similarity
+            + 0.25 * clipping_quality
         )
         row["edge_retention"] = edge / max(base_edge, 1e-9)
         row["health_score"] = float(np.clip(health, 0.0, 1.0))
+        row["health_state"] = "DEGRADED" if row["health_score"] < 0.65 else "OK"
 
 
 def yolo_metrics(model, img: np.ndarray) -> tuple[int, float, np.ndarray]:
@@ -221,13 +222,13 @@ def run(input_path: str | None, use_yolo: bool, out_dir: Path) -> list[dict]:
         "input": source_name,
         "detector": "YOLOv8n" if use_yolo else None,
         "health_score_formula": {
-            "sharpness_similarity": 0.35,
-            "edge_similarity": 0.20,
-            "brightness_similarity": 0.15,
-            "contrast_similarity": 0.15,
-            "clipping_quality": 0.15,
+            "sharpness_similarity": 0.40,
+            "edge_similarity": 0.15,
+            "brightness_similarity": 0.10,
+            "contrast_similarity": 0.10,
+            "clipping_quality": 0.25,
         },
-        "policy_demo_only": "health_score < 0.40 for 3 consecutive frames -> DEGRADED",
+        "policy_demo_only": "health_score < 0.65 for 3 consecutive frames -> DEGRADED",
         "claim_boundary": "Health score is a heuristic proxy; detector confidence is not mAP/recall.",
         "rows": rows,
     }
