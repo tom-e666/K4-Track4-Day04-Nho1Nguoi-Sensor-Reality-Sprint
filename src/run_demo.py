@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
+import os
 from pathlib import Path
 
 import cv2
@@ -27,6 +29,14 @@ def synthetic_road(w: int = 960, h: int = 540) -> np.ndarray:
     cv2.putText(img, "ADAS CAMERA HEALTH", (35, 70),
                 cv2.FONT_HERSHEY_SIMPLEX, 1.2, (20, 20, 20), 3)
     return img
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def load_input(path: str | None) -> tuple[np.ndarray, str]:
@@ -183,13 +193,28 @@ def save_detector_plot(rows: list[dict], out_dir: Path) -> None:
     plt.close(fig)
 
 
-def run(input_path: str | None, use_yolo: bool, out_dir: Path) -> list[dict]:
+def run(
+    input_path: str | None,
+    use_yolo: bool,
+    out_dir: Path,
+    source_url: str | None = None,
+) -> list[dict]:
     out_dir.mkdir(parents=True, exist_ok=True)
     base, source_name = load_input(input_path)
+    input_sha256 = sha256_file(Path(input_path)) if input_path else None
     model = None
+    detector_meta = None
     if use_yolo:
+        import ultralytics
         from ultralytics import YOLO
         model = YOLO("yolov8n.pt")
+        weight_path = Path("yolov8n.pt")
+        detector_meta = {
+            "name": "YOLOv8n",
+            "ultralytics_version": ultralytics.__version__,
+            "weight_file": weight_path.name,
+            "weight_sha256": sha256_file(weight_path) if weight_path.exists() else None,
+        }
 
     rows: list[dict] = []
     for level, (name, img) in enumerate(variants(base)):
@@ -220,7 +245,14 @@ def run(input_path: str | None, use_yolo: bool, out_dir: Path) -> list[dict]:
 
     summary = {
         "input": source_name,
-        "detector": "YOLOv8n" if use_yolo else None,
+        "input_source_url": source_url,
+        "input_sha256": input_sha256,
+        "detector": detector_meta,
+        "runtime_provenance": {
+            "github_run_id": os.environ.get("GITHUB_RUN_ID"),
+            "github_sha": os.environ.get("GITHUB_SHA"),
+            "github_repository": os.environ.get("GITHUB_REPOSITORY"),
+        },
         "health_score_formula": {
             "sharpness_similarity": 0.40,
             "edge_similarity": 0.15,
@@ -246,8 +278,9 @@ def main() -> None:
     parser.add_argument("--input", default=None, help="Optional path to an RGB road image")
     parser.add_argument("--yolo", action="store_true", help="Run optional YOLOv8n detector proxy")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUT))
+    parser.add_argument("--source-url", default=None, help="Optional provenance URL for the input")
     args = parser.parse_args()
-    run(args.input, args.yolo, Path(args.output_dir))
+    run(args.input, args.yolo, Path(args.output_dir), args.source_url)
 
 
 if __name__ == "__main__":
