@@ -107,6 +107,7 @@ results/
   degradation_metrics.png
   detector_proxy.png
   before_after.png
+  detector_before_after.png
   0_clean.jpg
   1_blur_k5.jpg
   2_blur_k11.jpg
@@ -141,7 +142,7 @@ Read: [docs/research.md](docs/research.md)
 ## Key engineering failure cases
 
 - **Blur:** edge/sharpness can collapse while mean confidence of the remaining YOLO boxes does not necessarily decrease.
-- **Glare:** local information can be saturated while global edges survive, so blur-only monitoring is insufficient.
+- **Glare:** local information can be saturated while global edges survive; the benchmark overlay also shows a visibly implausible `airplane 0.45` prediction over the bus/glare region.
 - **Impulse noise:** noise can *increase* Laplacian/edge energy, so “higher sharpness = healthier” is also insufficient.
 
 This motivates multi-signal health monitoring independent of detector confidence.
