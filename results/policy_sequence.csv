@@ -4,7 +4,7 @@ frame,condition,health_score,single_frame_state,policy_state
 2,clean,1.0,OK,OK
 3,clean,1.0,OK,OK
 4,clean,1.0,OK,OK
-5,glare_gain1.05,0.6359022912704646,DEGRADED,OK
+5,glare_gain1.05,0.6359022912704648,DEGRADED,OK
 6,clean,1.0,OK,OK
 7,clean,1.0,OK,OK
 8,clean,1.0,OK,OK
