@@ -66,6 +66,7 @@ Glare shows another failure mode:
 - highlight saturation jumps from **1.27% to 20.00%**
 - mean confidence drops by about **16.3%**
 - but detection count changes from 6 to 7
+- and in the saved overlay YOLO adds a large, visibly implausible **“airplane 0.45”** box over the bus/glare region
 
 Again, raw detection count is not a quality metric.
 
