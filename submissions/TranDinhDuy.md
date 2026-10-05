@@ -6,7 +6,7 @@
 **Họ tên:** Trần Đình Duy  
 **MSSV:** 2A202602631  
 **Vai trò trong nhóm:** Phân tích các ca thất bại và đề xuất chiến lược kỹ thuật (Failure Analysis & Engineering Decisions, Pitching): trực tiếp phân tích các ca gãy của mô hình thị giác máy tính phía sau (YOLOv8n bị tăng confidence khi ảnh mờ, chói sáng sinh nhãn máy bay ảo, nhiễu hạt đánh lừa bộ lọc tần số cao); xây dựng & mô phỏng chính sách lọc trễ chuỗi thời gian (3-frame temporal persistence policy); đề xuất cơ chế an toàn dự phòng (fallback) và danh mục telemetry cho xe ADAS (chịu trách nhiệm chính mục §4, §5 trong `REPORT.md` và `PITCH.md`).  
-**Repository:** https://github.com/tom-e666/K4-Track4-Day04-Nho1Nguoi-Sensor-Reality-Sprint @ commit `e477ec600385a18e906fb176a7ec271af618b04b`  
+**Repository:** https://github.com/tom-e666/K4-Track4-Day04-Nho1Nguoi-Sensor-Reality-Sprint @ commit `168935533b7d06f2cc547cac6c909359e34bf636`  
 *(Tên thư mục quy định: `K4-Track4-Day04-Nho1Nguoi-Sensor-Reality-Sprint`)*
 
 ---
