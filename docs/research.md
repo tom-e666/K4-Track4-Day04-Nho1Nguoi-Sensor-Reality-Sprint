@@ -89,7 +89,7 @@ The benchmark is based on nuScenes-C. Detection evaluation uses nuScenes metrics
 
 ### Important figures / tables
 - **Figure 1** — benchmark design: perception tasks, sensor configurations, corruption/failure types, and severities.
-- **RoboBEV arXiv version Figure 11** — pixel histograms under corruption; motion blur changes the global histogram relatively little while harming perception.
+- **Figure 2 (TPAMI/extended RoboBEV)** — pixel histograms under corruption; motion blur changes the global histogram relatively little while harming perception.
 - Corruption-parameter/result tables define the corruption settings and compare robustness across models.
 
 ### Assumptions / limitations
