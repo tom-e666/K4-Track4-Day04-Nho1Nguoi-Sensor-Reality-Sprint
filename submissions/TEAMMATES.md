@@ -4,7 +4,7 @@
 
 | # | Họ tên đầy đủ | MSSV | Vai trò (theo `REPORT.md` §0) |
 |---|---|---|---|
-| 1 | Bùi Đức Thành | `TODO` | Literature: camera IQA / soiling, corruption benchmarks; BREMOLA repo run path |
+| 1 | Bùi Đức Thành | 2A202602364 | Literature: camera IQA / soiling, corruption benchmarks; BREMOLA repo run path |
 | 2 | Nguyễn Đức Long | 2A202602917 | Code: corruptions, metrics, YOLO, BREMOLA integration |
 | 3 | Thái Phúc Tiến | 2A2026202873 | Benchmark recording: runs, provenance, tables, figures |
 | 4 | Trần Đình Duy | `TODO` | Failure analysis + pitch |
