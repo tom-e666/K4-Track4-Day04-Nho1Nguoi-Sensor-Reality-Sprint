@@ -5,7 +5,7 @@
 
 **Họ tên:** Nguyễn Đức Long  
 **Vai trò trong nhóm:** Code: tạo các corruption, tính metric, tích hợp YOLO và BREMOLA (deliverable: `src/run_demo.py`, `tests/`).  
-**Repository:** https://github.com/tom-e666/vin20kday19aisensor @ commit `dcf85a55aaaa1aaee5945365c3536df4f7342e99`
+**Repository:** https://github.com/tom-e666/K4-Track4-Day04-Nho1Nguoi-Sensor-Reality-Sprint @ commit `dcf85a55aaaa1aaee5945365c3536df4f7342e99`
 
 ## 1. Problem
 

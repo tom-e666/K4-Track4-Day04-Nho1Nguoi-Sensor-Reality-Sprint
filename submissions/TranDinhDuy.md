@@ -6,8 +6,8 @@
 **Họ tên:** Trần Đình Duy  
 **MSSV:** 2A202602631  
 **Vai trò trong nhóm:** Phân tích các ca thất bại và đề xuất chiến lược kỹ thuật (Failure Analysis & Engineering Decisions, Pitching): trực tiếp phân tích các ca gãy của mô hình thị giác máy tính phía sau (YOLOv8n bị tăng confidence khi ảnh mờ, chói sáng sinh nhãn máy bay ảo, nhiễu hạt đánh lừa bộ lọc tần số cao); xây dựng & mô phỏng chính sách lọc trễ chuỗi thời gian (3-frame temporal persistence policy); đề xuất cơ chế an toàn dự phòng (fallback) và danh mục telemetry cho xe ADAS (chịu trách nhiệm chính mục §4, §5 trong `REPORT.md` và `PITCH.md`).  
-**Repository:** https://github.com/tom-e666/vin20kday19aisensor @ commit `e477ec600385a18e906fb176a7ec271af618b04b`  
-*(Tên thư mục quy định: `K4-Track4-Day04-TenNhom-Sensor-Reality-Sprint`)*
+**Repository:** https://github.com/tom-e666/K4-Track4-Day04-Nho1Nguoi-Sensor-Reality-Sprint @ commit `e477ec600385a18e906fb176a7ec271af618b04b`  
+*(Tên thư mục quy định: `K4-Track4-Day04-Nho1Nguoi-Sensor-Reality-Sprint`)*
 
 ---
 
@@ -85,7 +85,7 @@
     --output-dir results
   ```
 
-- **Bảng số liệu thực nghiệm chính (Trích xuất từ [`results/metrics.csv`](file:///d:/vin20k/phase2/day-04/vin20kday19aisensor/results/metrics.csv)):**
+- **Bảng số liệu thực nghiệm chính (Trích xuất từ [`results/metrics.csv`](results/metrics.csv)):**
 
 | Điều kiện | Tham số lỗi | Laplacian var. | Highlight Sat. | BREMOLA | Health Score | State | Detections | Mean Conf. | Agreement | Bằng chứng |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |

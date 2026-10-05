@@ -3,7 +3,7 @@
 **Họ tên:** Thái Phúc Tiến  
 **Mã học viên / MSSV:** 2A2026202873  
 **Vai trò trong nhóm:** Thiết kế và hiện thực hóa pipeline thực nghiệm (`src/run_demo.py`), cài đặt các thuật toán đo đa chỉ số camera (Laplacian, Canny edge, Clipping/Saturation) & tính Composite Health Score; tích hợp downstream proxy YOLOv8n; thiết lập CI/CD GitHub Actions tự động hóa benchmark và trích xuất số liệu (`results/metrics.csv`, đồ thị minh chứng).  
-**Repository:** https://github.com/tom-e666/vin20kday19aisensor @ commit `dcf85a55aaaa1aaee5945365c3536df4f7342e99`
+**Repository:** https://github.com/tom-e666/K4-Track4-Day04-Nho1Nguoi-Sensor-Reality-Sprint @ commit `dcf85a55aaaa1aaee5945365c3536df4f7342e99`
 
 ---
 

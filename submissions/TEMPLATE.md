@@ -6,7 +6,7 @@
 
 **Họ tên:**  
 **Vai trò trong nhóm:** (đọc nguồn / chạy code / ghi benchmark / trình bày)  
-**Repository:** https://github.com/tom-e666/vin20kday19aisensor @ commit `________`
+**Repository:** https://github.com/tom-e666/K4-Track4-Day04-Nho1Nguoi-Sensor-Reality-Sprint @ commit `________`
 
 ## 1. Problem
 

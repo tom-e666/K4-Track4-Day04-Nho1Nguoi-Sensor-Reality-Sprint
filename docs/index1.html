@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Camera Degradation Health — Day 19 AI Sensor</title>
+<style>
+:root{--bg:#f5f5f7;--surface:#fff;--text:#1d1d1f;--muted:#6e6e73;--line:#d2d2d7;--blue:#0071e3;--good:#137333;--bad:#b3261e}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}.wrap{max-width:1120px;margin:auto;padding:52px 24px 80px}
+.hero,.card{background:var(--surface);border:1px solid var(--line);border-radius:24px}.hero{padding:42px}.card{padding:26px;margin-top:18px}
+.eyebrow{color:var(--blue);font-weight:750;letter-spacing:.02em}.hero h1{font-size:clamp(40px,7vw,72px);line-height:.98;letter-spacing:-.045em;margin:14px 0 18px;max-width:900px}.lede{font-size:19px;max-width:850px;color:var(--muted)}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}.badge{background:#eef5ff;color:#0059b2;border-radius:999px;padding:6px 10px;font-weight:700;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.grid .card{margin-top:18px}.pipeline{display:flex;gap:8px;align-items:center;overflow:auto;padding:8px 0}.node{white-space:nowrap;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fafafa;font-weight:650}.arrow{color:var(--muted);font-size:22px}
+h2{font-size:28px;letter-spacing:-.025em;margin:0 0 12px}h3{font-size:18px;margin:20px 0 8px}.muted{color:var(--muted)}.callout{border-left:4px solid var(--blue);padding:10px 14px;background:#f7fbff;border-radius:8px}
+.formula{font:600 15px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;background:#f5f5f7;border-radius:14px;padding:14px;overflow:auto}
+.figure{width:100%;border:1px solid var(--line);border-radius:16px;background:#fff;margin:10px 0}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}table{border-collapse:collapse;width:100%;min-width:920px;background:#fff}th,td{text-align:right;padding:11px 12px;border-bottom:1px solid #ececef;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{background:#f8f8fa;font-size:12px;text-transform:uppercase;letter-spacing:.04em}.state{font-weight:800}.ok{color:var(--good)}.degraded{color:var(--bad)}
+.metric{font-size:30px;font-weight:780;letter-spacing:-.03em}.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}.kpi>div{border:1px solid var(--line);border-radius:16px;padding:16px;background:#fafafa}.kpi small{display:block;color:var(--muted);margin-top:2px}
+.ref{padding:12px 0;border-top:1px solid #ececef}.ref:first-of-type{border-top:0}.footer{color:var(--muted);text-align:center;padding:32px 8px}
+code{background:#f1f1f3;padding:2px 6px;border-radius:6px}.cmd{display:block;white-space:pre-wrap;background:#151517;color:#f5f5f7;padding:16px;border-radius:14px;overflow:auto}
+@media(max-width:760px){.grid,.twocol{grid-template-columns:1fr}.hero{padding:28px}.kpi{grid-template-columns:1fr}.wrap{padding:24px 14px 54px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<section class="hero">
+  <div class="eyebrow">VinAI20K · Day 19 · AI Sensor</div>
+  <h1>Camera Degradation Health Score</h1>
+  <p class="lede">A compact ADAS engineering study: controlled camera degradation → interpretable health signals + upstream BREMOLA no-reference IQA → YOLOv8n downstream proxy → persistence policy → failure analysis → fallback decision.</p>
+  <div class="badges"><span class="badge">Public street image</span><span class="badge">9 graded corruptions</span><span class="badge">Upstream BREMOLA run</span><span class="badge">YOLOv8n proxy</span><span class="badge">Reproducible CI</span><span class="badge">Literature-backed</span></div>
+</section>
+
+<div class="grid">
+<section class="card">
+  <h2>1. Problem</h2>
+  <p>A forward camera can become unreliable because of blur, glare/over-exposure, noise or contamination. The safety-relevant question is not only whether a detector changes, but whether the system has an independent indication that the <b>input sensor itself is degraded</b>.</p>
+  <p class="muted">This demo is a camera-health experiment, not a production functional-safety monitor.</p>
+</section>
+<section class="card">
+  <h2>Claim boundary</h2>
+  <p><b>Our measurements:</b> values in the benchmark table/plots below.</p>
+  <p><b>Paper evidence:</b> findings cited in the Research section.</p>
+  <p><b>Heuristic:</b> composite weights, the 0.65 threshold (set after the first run, then frozen) and the 3-frame persistence rule.</p>
+  <p><b>Hypothesis:</b> statements labelled as such; not tested.</p>
+  <p><b>Not claimed:</b> mAP, recall, missed-detection rate, statistical significance, or production safety validation.</p>
+</section>
+</div>
+
+<section class="card">
+  <h2>2. Method</h2>
+  <div class="pipeline">
+    <span class="node">RGB road frame</span><span class="arrow">→</span>
+    <span class="node">blur / glare / noise</span><span class="arrow">→</span>
+    <span class="node">health metrics</span><span class="arrow">→</span>
+    <span class="node">YOLOv8n proxy</span><span class="arrow">→</span>
+    <span class="node">health state</span><span class="arrow">→</span>
+    <span class="node">engineering fallback</span>
+  </div>
+  <h3>Signals</h3>
+  <p>Laplacian variance, edge density/retention, mean brightness, contrast, highlight saturation, shadow/highlight clipping and entropy. Plus the <b>unmodified upstream BREMOLA script</b> (Nam et al., Vehicles 2025; commit <code>7ba2699</code>) as a no-reference blur score. Detection count, mean YOLO confidence and agreement with clean-image pseudo-labels are deliberately kept as <b>downstream proxy signals</b>; agreement is not recall.</p>
+  <h3>Composite health score</h3>
+  <div class="formula">H = 0.40·sharpness_similarity
+  + 0.15·edge_similarity
+  + 0.10·brightness_similarity
+  + 0.10·contrast_similarity
+  + 0.25·clipping_quality</div>
+  <p class="muted">Similarity terms compare the corrupted frame with the clean experimental baseline, so the score is <b>reference-based</b> and not deployable as-is. Weights are a lab heuristic set after the first 6-condition run and then frozen; the 4 milder glare/noise levels are out-of-sample.</p>
+</section>
+
+<section class="card">
+  <h2>3. Benchmark evidence</h2>
+  <p>Input is the public Ultralytics <code>bus.jpg</code> street photo (810×1080), fetched at runtime. From the same baseline we apply one corruption at a time: Gaussian blur k = 5/11/21, glare gain 0.35/0.70/1.05, salt-and-pepper p = 0.5%/1%/2.5% (seed 19). Every parameter is stored in <code>summary.json → conditions</code>.</p>
+  <div class="kpi">
+    <div><span class="metric" id="clean-conf">—</span><small>clean mean YOLO confidence</small></div>
+    <div><span class="metric" id="glare-drop">—</span><small>glare gain 1.05 confidence change vs clean</small></div>
+    <div><span class="metric" id="blur-edge">—</span><small>k=21 edge retention</small></div>
+  </div>
+  <div id="status" class="callout">Loading committed benchmark artifact…</div>
+  <div class="table-wrap" style="margin-top:14px"><table>
+    <thead><tr><th>Condition</th><th>Laplacian var.</th><th>Highlight sat.</th><th>Entropy (bits)</th><th>Edge retention</th><th>BREMOLA</th><th>Health</th><th>State</th><th>Detections</th><th>Mean conf.</th><th>Agreement w/ clean</th></tr></thead>
+    <tbody id="result-body"><tr><td colspan="11">Loading results/summary.json…</td></tr></tbody>
+  </table></div>
+  <div class="twocol" style="margin-top:16px">
+    <div><h3>Health proxies</h3><img class="figure" src="results/degradation_metrics.png" alt="Degradation health plot"></div>
+    <div><h3>Detector proxy</h3><img class="figure" src="results/detector_proxy.png" alt="YOLO detector proxy plot"></div>
+  </div>
+  <h3>Persistence policy (synthetic 23-frame sequence)</h3>
+  <img class="figure" src="results/policy_timeline.png" alt="Per-frame health with single-frame and policy alarms">
+  <p class="muted">Single-frame thresholding raises 3 alarms on transient glare/noise frames; the 3-consecutive-frame policy raises 0 and alarms 2 frames after persistent blur onset. Frames reuse single-image variants; not real video.</p>
+  <h3>Visual evidence</h3>
+  <img class="figure" src="results/before_after.png" alt="Clean versus glare gain 1.05 input">
+  <h3>Detector failure montages</h3>
+  <img class="figure" src="results/detector_before_after.png" alt="YOLO detections on clean versus glare gain 1.05 input">
+  <p class="muted">Glare gain 1.05: <code>bus 0.87</code> is lost and replaced by <code>airplane 0.45</code> + <code>truck 0.29</code>. Count rises 6 → 7 while the largest object is mis-classified.</p>
+  <img class="figure" src="results/detector_blur_compare.png" alt="YOLO detections on clean versus blur kernel 21 input">
+  <p class="muted">Blur k = 21: count stays 6 → 6, but <code>stop sign 0.26</code> is lost and a wrong <code>dog 0.36</code> appears, which is why mean confidence <i>rises</i> +3.0%. Agreement with clean pseudo-labels, not a labelled recall measurement.</p>
+  <p><a href="results/policy_sequence.csv">policy_sequence.csv</a></p>
+  <p><a href="results/metrics.csv">Download committed metrics.csv</a> · <a href="results/summary.json">View summary.json + provenance</a></p>
+</section>
+
+<section class="card">
+  <h2>4. Failure case</h2>
+  <div class="callout"><b>Selected case: glare.</b> At gain 1.05, saturated pixels rise 1.27% → 20.00% and the detector loses the bus. Our health score is 0.636, just under a threshold tuned on this very frame. At gain 0.70 (11.42% saturated), the score says <b>OK (0.803)</b>.</div>
+  <p><b>We observed:</b> clipping has weight 0.25, so glare alone can lower H by at most 0.25. A global average under-weights a regional fault. Upstream BREMOLA rises slightly under glare (+3.8%).</p>
+  <p><b>Sources report:</b> BREMOLA's authors place noise and glare outside the method's blur-only scope; our BREMOLA reading is consistent with that statement.</p>
+  <p><b>Hypothesis (not tested):</b> for AEB/ACC tracking a bus as lead vehicle, a class flip at that moment could change the braking decision.</p>
+  <p><b>Also measured:</b> mean confidence moves for reasons unrelated to image health. It is +3.0% under blur k = 21 (a wrong box replaced a weak one) and +13.1% under 0.5% noise (a weak box disappeared).</p>
+</section>
+
+<section class="card">
+  <h2>5. Engineering decision</h2>
+  <p class="metric">H &lt; 0.65 for 3 consecutive frames → DEGRADED</p>
+  <p>This is a <b>demo heuristic</b>. A production threshold requires fleet calibration, labeled health states, false-positive/false-negative analysis and safety validation.</p>
+  <h3>Decision</h3>
+  <p>(1) Do not use detector confidence as the health signal. (2) Add a glare-specific highlight-saturation rule beside the composite score. (3) Keep the 3-frame persistence rule. (4) Replace the clean reference with a rolling healthy-frame reference.</p>
+  <h3>Verify next round</h3>
+  <p>Flag rate per glare level on ≥20 images × 5 levels; the policy on real video with labelled fault intervals; real recall on a labelled nuScenes-C camera slice. Full criteria: REPORT §5.2.</p>
+  <h3>Telemetry to log</h3>
+  <p>Frame timestamp, exposure time, gain/ISO, shutter, auto-exposure state, brightness/clipping statistics and camera temperature when available.</p>
+  <h3>Fallback discussion</h3>
+  <p>Raise a degradation event, down-weight camera evidence in sensor fusion, and request a safer operating mode. Where the platform has independent Radar/LiDAR sensing, those modalities can support fallback. <b>This repository does not implement vehicle sensor fusion or actuation.</b></p>
+</section>
+
+<section class="card">
+  <h2>Research connection</h2>
+  <div class="ref"><b>Dong et al., CVPR 2023.</b> 27 corruption types and KITTI-C/nuScenes-C/Waymo-C; camera-only detectors are highly vulnerable to image corruptions. <a href="https://openaccess.thecvf.com/content/CVPR2023/html/Dong_Benchmarking_Robustness_of_3D_Object_Detection_to_Common_Corruptions_CVPR_2023_paper.html">Paper</a></div>
+  <div class="ref"><b>Xie et al., IEEE TPAMI 2025 (RoboBEV).</b> Eight camera corruptions/failures at three severities and 33 BEV models; motivates testing more than clean accuracy. <a href="https://doi.org/10.1109/TPAMI.2025.3535960">DOI</a></div>
+  <div class="ref"><b>Nam et al., Vehicles 2025 (BREMOLA).</b> No-reference blur quality using moving spectrum + Laplacian; Table 2 reports Laplacian SROCC 0.9236 among the compared HPFs. <b>We run its code</b> at commit <code>7ba2699</code>. <a href="https://doi.org/10.3390/vehicles7010008">DOI</a> · <a href="https://github.com/woongchan789/BREMOLA">code</a></div>
+  <div class="ref"><b>Yang et al., Sensors 2026.</b> Interpretable lens-soiling severity plus temporal stabilization; reported Jitter (MAD) reduction of 51.5%. <a href="https://doi.org/10.3390/s26113533">DOI</a></div>
+  <p><a href="research.md">Full research review: method, datasets, metrics, figures/tables, limitations and demo mapping</a></p>
+</section>
+
+<section class="card">
+  <h2>Limitations & reproducibility</h2>
+  <p>This is a one-image controlled benchmark on a handheld street photo, not a vehicle-mounted camera frame or a fleet-scale validation. The corruptions are synthetic. The health score is reference-based and its weights were tuned on 5 of the 9 degraded conditions. YOLO outputs lack ground truth. The policy sequence is not real video. BREMOLA was run outside its tested regime (aspect stretch, Gaussian blur). The threshold is not safety-certified.</p>
+  <code class="cmd">pip install -r requirements-yolo.txt
+curl -L https://ultralytics.com/images/bus.jpg -o assets/bus.jpg
+git clone https://github.com/woongchan789/BREMOLA third_party/BREMOLA
+git -C third_party/BREMOLA checkout 7ba26999c265692bb8e44c5a3f2d91c06746830f
+python src/run_demo.py --input assets/bus.jpg --yolo \
+  --bremola-script third_party/BREMOLA/bremola.py --output-dir results
+pytest -q</code>
+  <p class="muted"><code>results/summary.json</code> stores the input URL/hash, every corruption parameter, the model version and weight hash, the BREMOLA commit and script hash, run context and library versions.</p>
+</section>
+
+<div class="footer">Day 19 · T1 Camera Degradation Health Score · Evidence first, claims separated.</div>
+</main>
+<script>
+const fmt=(v,n=3)=>Number(v).toFixed(n);
+fetch('results/summary.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{
+  const rows=d.rows||[]; const tbody=document.getElementById('result-body'); tbody.innerHTML='';
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    const state=(r.health_state||'—');
+    tr.innerHTML=`<td><b>${r.condition}</b></td><td>${fmt(r.laplacian_variance,1)}</td><td>${(100*r.saturation_ratio).toFixed(2)}%</td><td>${fmt(r.entropy)}</td><td>${(100*r.edge_retention).toFixed(1)}%</td><td>${r.bremola==null?'—':fmt(r.bremola,2)}</td><td>${fmt(r.health_score)}</td><td class="state ${state==='OK'?'ok':'degraded'}">${state}</td><td>${r.detections??'—'}</td><td>${r.mean_confidence==null?'—':fmt(r.mean_confidence)}</td><td>${r.pseudo_label_agreement==null?'—':(100*r.pseudo_label_agreement).toFixed(0)+'%'}</td>`;
+    tbody.appendChild(tr);
+  });
+  const clean=rows.find(r=>r.condition==='clean'), glare=rows.find(r=>r.condition==='glare_gain1.05'), blur=rows.find(r=>r.condition==='blur_gauss_k21');
+  if(clean){document.getElementById('clean-conf').textContent=fmt(clean.mean_confidence)}
+  if(clean&&glare){const pct=100*(glare.mean_confidence/clean.mean_confidence-1);document.getElementById('glare-drop').textContent=(pct>0?'+':'')+pct.toFixed(1)+'%'}
+  if(blur){document.getElementById('blur-edge').textContent=(100*blur.edge_retention).toFixed(1)+'%'}
+  const det=d.detector||{};
+  document.getElementById('status').innerHTML=`<b>Committed benchmark loaded.</b> Input: ${d.input}. Detector: ${det.name||'none'} ${det.ultralytics_version?'(Ultralytics '+det.ultralytics_version+')':''}. <span class="muted">Health threshold is a demo heuristic.</span>`;
+}).catch(e=>{
+  document.getElementById('status').innerHTML='<b>Benchmark JSON not available in this view.</b> Open the deployed GitHub Pages site or the repository results/ directory.';
+});
+</script>
+</body></html>

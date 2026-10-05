@@ -194,7 +194,7 @@ Source: `docs/index.html`
 After Pages is enabled:
 
 ```text
-https://tom-e666.github.io/vin20kday19aisensor/
+https://tom-e666.github.io/K4-Track4-Day04-Nho1Nguoi-Sensor-Reality-Sprint/
 ```
 
 One-time GitHub setting if deployment reports “Pages site not found”:
