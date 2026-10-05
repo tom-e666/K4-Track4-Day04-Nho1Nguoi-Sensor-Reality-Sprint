@@ -12,6 +12,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: real-image-benchmark
+  cancel-in-progress: true
+
 jobs:
   benchmark:
     runs-on: ubuntu-latest
@@ -45,5 +49,6 @@ jobs:
             echo "Benchmark artifacts unchanged."
           else
             git commit -m "data: refresh real-image benchmark evidence"
-            git push
+            git pull --rebase origin main
+            git push origin HEAD:main
           fi
