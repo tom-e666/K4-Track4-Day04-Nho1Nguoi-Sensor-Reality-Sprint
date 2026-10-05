@@ -27,10 +27,11 @@
 
 | Member | Role | Deliverable |
 |---|---|---|
-| Bùi Đức Thành | Literature: camera IQA / soiling [3], [4], corruption benchmarks [1], [2] ; BREMOLA repo run path | `docs/research.md` §3–4, §2.2 below, `docs/research.md` §1–2 |
-| Nguyễn Đức Long | Code: corruptions, metrics, YOLO, BREMOLA integration | `src/run_demo.py`, `tests/` |
-| Thái PhúcTiến | Benchmark recording: runs, provenance, tables, figures | `results/`, §3 |
-| Trần Đình Duy | Failure analysis + pitch | §4–§5, `PITCH.md` |
+| Bùi Đức Thành (2A202602364) | Literature: camera IQA / soiling [3], [4], corruption benchmarks [1], [2] ; BREMOLA repo run path | `docs/research.md` §3–4, §2.2 below, `docs/research.md` §1–2 |
+| Nguyễn Đức Long (2A202602917) | Code: corruptions, metrics, YOLO, BREMOLA integration | `src/run_demo.py`, `tests/` |
+| Thái Phúc Tiến (2A2026202873) | Benchmark recording: runs, provenance, tables, figures | `results/`, §3 |
+| Trần Đình Duy (2A202602631) | Failure analysis + pitch | §4–§5, `PITCH.md` |
+| Member 5 (`TODO`) | Testing, validation & presentation | `docs/slides.html`, `tests/` |
 
 Each member submits an individual copy on VLearn using [`submissions/TEMPLATE.md`](submissions/TEMPLATE.md).
 
