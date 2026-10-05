@@ -19,6 +19,15 @@ Third-party inputs/models are referenced rather than treated as project-owned ar
 - Storage policy: the weight is downloaded at runtime and not committed.
 - Reproducibility: `results/summary.json` records package version and the local weight SHA-256 when available.
 
+## BREMOLA no-reference IQA (upstream code)
+
+- Repository: https://github.com/woongchan789/BREMOLA
+- Pinned commit: `7ba26999c265692bb8e44c5a3f2d91c06746830f`
+- Used file: `bremola.py`, run **unmodified** as a subprocess on a lossless PNG of each benchmark variant.
+- Storage policy: cloned into git-ignored `third_party/BREMOLA` at benchmark time; no upstream code is committed here.
+- Reproducibility: `results/summary.json → no_reference_iqa` records the commit and the script's SHA-256.
+- License note: no license file was found in the repository at the pinned commit; we therefore only execute it and do not redistribute it.
+
 ## Research papers
 
 Paper PDFs are **not copied into this repository**. Stable DOI/official-paper/code URLs and full citations are stored in:

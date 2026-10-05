@@ -9,18 +9,21 @@ A compact, reproducible ADAS sensor-health study.
 
 ```text
 RGB road frame
-  → controlled degradation
-      clean / Gaussian blur / glare / salt-and-pepper noise
+  → controlled degradation (one factor, named parameter level)
+      clean / Gaussian blur k5,k11,k21 / glare gain 0.35,0.70,1.05 / salt-and-pepper p 0.5%,1%,2.5%
   → camera-health metrics
       Laplacian variance
       edge density / retention
       brightness / contrast
       highlight + shadow clipping
       entropy
-  → composite demo health score
+  → composite demo health score (reference-based)
+  → optional upstream BREMOLA no-reference IQA (pinned commit, run unmodified)
   → optional YOLOv8n detector proxy
       detection count
       mean confidence
+      agreement with clean-image pseudo-labels (not recall)
+  → persistence policy on a synthetic frame sequence
   → failure-case analysis
   → engineering fallback recommendation
 ```
@@ -34,7 +37,7 @@ The repository deliberately separates four classes of claims:
 3. **Demo heuristics** — health-score weights and the persistence threshold.
 4. **Production claims** — **none**. This repository is not a validated automotive safety monitor.
 
-YOLO confidence/count are downstream proxy signals. They are **not mAP, recall, missed-detection rate, or correctness** without labeled ground truth.
+YOLO confidence/count/agreement are downstream proxy signals. They are **not mAP, recall, missed-detection rate, or correctness** without labeled ground truth.
 
 ## Reproduce the lightweight smoke test
 
@@ -58,15 +61,20 @@ This path is fully offline after dependency installation and uses a deterministi
 
 ```bash
 pip install -r requirements-yolo.txt
-
-curl -L "https://ultralytics.com/images/bus.jpg" -o bus.jpg
+mkdir -p assets third_party
+curl -L "https://ultralytics.com/images/bus.jpg" -o assets/bus.jpg
+git clone https://github.com/woongchan789/BREMOLA third_party/BREMOLA
+git -C third_party/BREMOLA checkout 7ba26999c265692bb8e44c5a3f2d91c06746830f
 
 python src/run_demo.py \
-  --input bus.jpg \
+  --input assets/bus.jpg \
   --source-url "https://ultralytics.com/images/bus.jpg" \
   --yolo \
+  --bremola-script third_party/BREMOLA/bremola.py \
   --output-dir results
 ```
+
+`assets/` and `third_party/` are git-ignored; nothing third-party is committed.
 
 The GitHub workflow `.github/workflows/benchmark.yml` runs the same benchmark and commits its evidence.
 
@@ -88,7 +96,8 @@ Important details:
 - sharpness and edge terms use **symmetric similarity**, so artificial high-frequency noise is also penalized;
 - clipping penalizes extra shadow/highlight clipping relative to the clean baseline;
 - `saturation_ratio` in this project means **near-white sensor/highlight saturation**, not HSV chroma saturation;
-- all weights are interpretable **demo choices**, not learned or safety-certified.
+- all weights are interpretable **demo choices**, not learned or safety-certified. They were set after the first 6-condition run and then frozen; the 4 milder glare/noise levels test them out of sample (2 of 4 are missed, see REPORT §3.3 D);
+- the score compares with a clean frame of the same scene, so it is **reference-based** and not deployable as-is.
 
 Demo policy:
 
@@ -96,25 +105,26 @@ Demo policy:
 health_score < 0.65 for 3 consecutive frames → DEGRADED
 ```
 
-The temporal persistence is a design recommendation; this single-frame benchmark does not simulate a full driving sequence.
+The rule is implemented in `persistence_policy()` and evaluated on a 23-frame synthetic sequence built from the single-image variants (`results/policy_sequence.csv`, `results/policy_timeline.png`): 3 → 0 transient alarms, 2-frame latency on persistent blur. It is not real video.
 
 ## Artifacts stored in the repository
 
 ```text
 results/
-  metrics.csv
-  summary.json
+  metrics.csv                 per-condition metrics + per-box class lists
+  summary.json                provenance, condition parameters, policy stats
+  policy_sequence.csv         per-frame health / single-frame vs policy state
   degradation_metrics.png
   detector_proxy.png
-  before_after.png
-  detector_before_after.png
-  0_clean.jpg
-  1_blur_k5.jpg
-  2_blur_k11.jpg
-  3_blur_k21.jpg
-  4_strong_glare.jpg
-  5_salt_pepper.jpg
-  detector_*.jpg
+  policy_timeline.png
+  before_after.png            clean vs glare_gain1.05
+  detector_before_after.png   YOLO clean vs glare_gain1.05
+  detector_blur_compare.png   YOLO clean vs blur_gauss_k21
+  NN_<condition>.jpg          00_clean … 09_saltpepper_p0.025
+  detector_NN_<condition>.jpg
+
+submissions/
+  TEMPLATE.md                 individual VLearn submission template
 
 docs/
   index.html
@@ -126,7 +136,7 @@ REFERENCES.bib
 THIRD_PARTY.md
 ```
 
-`summary.json` records benchmark provenance including source URL/hash, Ultralytics version, model-weight hash when available, GitHub run ID and commit SHA.
+`summary.json` records benchmark provenance: source URL/hash, every corruption parameter, Ultralytics version, model-weight hash, BREMOLA commit and script hash, run context (local or GitHub Actions run ID/SHA) and library versions.
 
 ## Research base
 
@@ -134,20 +144,28 @@ The research review covers:
 
 - Dong et al., **CVPR 2023** — KITTI-C / nuScenes-C / Waymo-C, 27 common corruptions.
 - Xie et al., **IEEE TPAMI 2025 / RoboBEV** — BEV robustness under camera corruption/failure.
-- Nam et al., **Vehicles 2025 / BREMOLA** — no-reference autonomous-driving blur quality using Fourier spectrum + Laplacian.
+- Nam et al., **Vehicles 2025 / BREMOLA** — no-reference autonomous-driving blur quality using Fourier spectrum + Laplacian. **Upstream code is run** in our benchmark at a pinned commit.
 - Yang et al., **Sensors 2026** — interpretable camera-lens soiling severity and temporal stabilization.
 
 Read: [docs/research.md](docs/research.md)
 
 ## Key engineering failure cases
 
-- **Blur:** edge/sharpness can collapse while mean confidence of the remaining YOLO boxes does not necessarily decrease.
-- **Glare:** local information can be saturated while global edges survive; the benchmark overlay also shows a visibly implausible `airplane 0.45` prediction over the bus/glare region.
-- **Impulse noise:** noise can *increase* Laplacian/edge energy, so “higher sharpness = healthier” is also insufficient.
+- **Blur k=21:** Laplacian −99.9%, yet mean confidence +3.0%: the detector swapped `stop sign 0.26` for a wrong `dog 0.36` while the count stayed at 6.
+- **Glare gain 1.05:** `bus 0.87` is lost and replaced by `airplane 0.45` + `truck 0.29`; at gain 0.70 (11% saturated pixels) the health score still says OK.
+- **Impulse noise:** Laplacian/edge energy *increases*; at p=0.5% mean confidence rises +13% only because a weak box disappears.
+- **BREMOLA (upstream):** detects blur onset, flat from k5 to k21, rises under glare/noise (consistent with its blur-only scope).
 
 This motivates multi-signal health monitoring independent of detector confidence.
 
 ## Engineering decision
+
+1. Do not use detector confidence/count as the camera-health signal.
+2. Add a glare-specific highlight-saturation rule beside the composite score: a global average hides regional glare.
+3. Keep the 3-consecutive-frame persistence rule.
+4. Replace the clean reference with a rolling healthy-frame reference before any deployment.
+
+How each change is verified next round is listed in REPORT §5.2.
 
 For a real vehicle, a camera-degradation event should additionally log:
 
@@ -164,7 +182,7 @@ A production platform could then down-weight camera evidence in fusion and reque
 ## CI
 
 - `CI` — install → tests → synthetic smoke benchmark → upload artifact.
-- `Real-image YOLO benchmark` — fetch public road image → tests → YOLO benchmark → upload artifact → commit reproducible evidence.
+- `Real-image YOLO benchmark` — fetch public image + BREMOLA at pinned commit → tests → benchmark → upload artifact → commit reproducible evidence.
 - `Deploy static report to Pages` — stages `results/` under the static site and deploys `docs/`.
 
 GitHub Pages requires the repository Pages source to be enabled once as **GitHub Actions**. See the final setup note below.

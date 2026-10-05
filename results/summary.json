@@ -2,17 +2,141 @@
   "input": "bus.jpg",
   "input_source_url": "https://ultralytics.com/images/bus.jpg",
   "input_sha256": "c02019c4979c191eb739ddd944445ef408dad5679acab6fd520ef9d434bfbc63",
+  "input_shape_hw": [
+    1080,
+    810
+  ],
   "detector": {
     "name": "YOLOv8n",
     "ultralytics_version": "8.4.172",
     "weight_file": "yolov8n.pt",
-    "weight_sha256": "f59b3d833e2ff32e194b5bb8e08d211dc7c5bdf144b90d2c8412c47ccfc83b36"
+    "weight_sha256": "f59b3d833e2ff32e194b5bb8e08d211dc7c5bdf144b90d2c8412c47ccfc83b36",
+    "pseudo_label_iou": 0.5
+  },
+  "no_reference_iqa": {
+    "name": "BREMOLA (Nam et al., Vehicles 2025)",
+    "repository": "https://github.com/woongchan789/BREMOLA",
+    "commit": "7ba26999c265692bb8e44c5a3f2d91c06746830f",
+    "script_sha256": "985363e117cd53d876d11dec36e6743b424de53932063c664b6b417add6f90ed",
+    "note": "Upstream script run unmodified; it resizes every frame to 1920x1080."
   },
   "runtime_provenance": {
-    "github_run_id": "37268946840",
-    "github_sha": "a1dd055dbaaa2e36b46bdcbb7715b0a0f95e44d1",
-    "github_repository": "tom-e666/vin20kday19aisensor"
+    "context": "local",
+    "github_run_id": null,
+    "github_sha": null,
+    "github_repository": null,
+    "versions": {
+      "python": "3.11.0",
+      "platform": "Windows-10-10.0.22631-SP0",
+      "numpy": "1.26.4",
+      "opencv": "4.10.0",
+      "torch": "2.0.1+cpu"
+    }
   },
+  "conditions": [
+    {
+      "level": 0,
+      "name": "clean",
+      "family": "baseline",
+      "params": {}
+    },
+    {
+      "level": 1,
+      "name": "blur_gauss_k5",
+      "family": "blur",
+      "params": {
+        "kernel": 5,
+        "sigma_px": 1.1
+      }
+    },
+    {
+      "level": 2,
+      "name": "blur_gauss_k11",
+      "family": "blur",
+      "params": {
+        "kernel": 11,
+        "sigma_px": 2.0
+      }
+    },
+    {
+      "level": 3,
+      "name": "blur_gauss_k21",
+      "family": "blur",
+      "params": {
+        "kernel": 21,
+        "sigma_px": 3.5
+      }
+    },
+    {
+      "level": 4,
+      "name": "glare_gain0.35",
+      "family": "glare",
+      "params": {
+        "gain": 0.35,
+        "center_px": [
+          591,
+          324
+        ],
+        "radius_px": 243,
+        "falloff_sigma_px": 81.0
+      }
+    },
+    {
+      "level": 5,
+      "name": "glare_gain0.70",
+      "family": "glare",
+      "params": {
+        "gain": 0.7,
+        "center_px": [
+          591,
+          324
+        ],
+        "radius_px": 243,
+        "falloff_sigma_px": 81.0
+      }
+    },
+    {
+      "level": 6,
+      "name": "glare_gain1.05",
+      "family": "glare",
+      "params": {
+        "gain": 1.05,
+        "center_px": [
+          591,
+          324
+        ],
+        "radius_px": 243,
+        "falloff_sigma_px": 81.0
+      }
+    },
+    {
+      "level": 7,
+      "name": "saltpepper_p0.005",
+      "family": "impulse_noise",
+      "params": {
+        "p": 0.005,
+        "seed": 19
+      }
+    },
+    {
+      "level": 8,
+      "name": "saltpepper_p0.010",
+      "family": "impulse_noise",
+      "params": {
+        "p": 0.01,
+        "seed": 19
+      }
+    },
+    {
+      "level": 9,
+      "name": "saltpepper_p0.025",
+      "family": "impulse_noise",
+      "params": {
+        "p": 0.025,
+        "seed": 19
+      }
+    }
+  ],
   "health_score_formula": {
     "sharpness_similarity": 0.4,
     "edge_similarity": 0.15,
@@ -20,13 +144,50 @@
     "contrast_similarity": 0.1,
     "clipping_quality": 0.25
   },
+  "health_score_reference": "clean image of the same scene (reference-based, not deployable as-is)",
+  "health_threshold": 0.65,
   "policy_demo_only": "health_score < 0.65 for 3 consecutive frames -> DEGRADED",
-  "claim_boundary": "Health score is a heuristic proxy; detector confidence is not mAP/recall.",
+  "policy_simulation": {
+    "sequence": [
+      "clean",
+      "clean",
+      "clean",
+      "clean",
+      "clean",
+      "glare_gain1.05",
+      "clean",
+      "clean",
+      "clean",
+      "clean",
+      "saltpepper_p0.025",
+      "saltpepper_p0.025",
+      "clean",
+      "clean",
+      "clean",
+      "blur_gauss_k21",
+      "blur_gauss_k21",
+      "blur_gauss_k21",
+      "blur_gauss_k21",
+      "blur_gauss_k21",
+      "blur_gauss_k21",
+      "blur_gauss_k21",
+      "blur_gauss_k21"
+    ],
+    "sequence_length": 23,
+    "transient_frames": 3,
+    "single_frame_alarms_on_transients": 3,
+    "policy_alarms_on_transients": 0,
+    "persistent_onset_frame": 15,
+    "policy_first_alarm_frame": 17,
+    "policy_alarm_latency_frames": 2
+  },
+  "claim_boundary": "Health score is a heuristic proxy; detector confidence and agreement with clean-image pseudo-labels are not mAP/recall.",
   "rows": [
     {
       "level": 0,
       "condition": "clean",
-      "laplacian_variance": 3619.170792472195,
+      "family": "baseline",
+      "laplacian_variance": 3619.1707924721945,
       "saturation_ratio": 0.012705761316872429,
       "shadow_clip_ratio": 0.05422267946959305,
       "clipped_pixel_ratio": 0.06692844078646548,
@@ -34,15 +195,21 @@
       "edge_density": 0.18749771376314586,
       "brightness_mean": 116.4296159122085,
       "contrast_std": 68.00475028385407,
+      "bremola": 38.9066270800632,
       "detections": 6,
-      "mean_confidence": 0.6555636525154114,
+      "mean_confidence": 0.655563289920489,
+      "detected_classes": "bus:0.87;person:0.87;person:0.85;person:0.83;person:0.26;stop sign:0.26",
+      "pseudo_label_agreement": 1.0,
+      "lost_vs_clean": "",
+      "new_vs_clean": "",
       "edge_retention": 1.0,
       "health_score": 1.0,
       "health_state": "OK"
     },
     {
       "level": 1,
-      "condition": "blur_k5",
+      "condition": "blur_gauss_k5",
+      "family": "blur",
       "laplacian_variance": 121.50240849773306,
       "saturation_ratio": 0.0051771833561957015,
       "shadow_clip_ratio": 0.03994741655235482,
@@ -50,16 +217,22 @@
       "entropy": 7.864990234375,
       "edge_density": 0.08954846822130773,
       "brightness_mean": 116.43453017832647,
-      "contrast_std": 63.94108108221322,
+      "contrast_std": 63.94108108221323,
+      "bremola": 29.30092925457415,
       "detections": 6,
-      "mean_confidence": 0.6532925367355347,
+      "mean_confidence": 0.6532927006483078,
+      "detected_classes": "bus:0.87;person:0.87;person:0.84;person:0.81;stop sign:0.27;person:0.25",
+      "pseudo_label_agreement": 1.0,
+      "lost_vs_clean": "",
+      "new_vs_clean": "",
       "edge_retention": 0.47759765398755055,
-      "health_score": 0.5290889986697889,
+      "health_score": 0.529088998669789,
       "health_state": "DEGRADED"
     },
     {
       "level": 2,
-      "condition": "blur_k11",
+      "condition": "blur_gauss_k11",
+      "family": "blur",
       "laplacian_variance": 13.044756477565244,
       "saturation_ratio": 0.003507087334247828,
       "shadow_clip_ratio": 0.03364883401920439,
@@ -68,16 +241,22 @@
       "edge_density": 0.0285413808870599,
       "brightness_mean": 116.43471536351166,
       "contrast_std": 61.756041687235296,
+      "bremola": 29.578728315323797,
       "detections": 6,
-      "mean_confidence": 0.6620054244995117,
+      "mean_confidence": 0.6620049824317297,
+      "detected_classes": "bus:0.88;person:0.87;person:0.85;person:0.83;person:0.29;dog:0.26",
+      "pseudo_label_agreement": 0.8333333333333334,
+      "lost_vs_clean": "stop sign:0.26",
+      "new_vs_clean": "dog:0.26",
       "edge_retention": 0.1522225541539906,
       "health_score": 0.4650825035249326,
       "health_state": "DEGRADED"
     },
     {
       "level": 3,
-      "condition": "blur_k21",
-      "laplacian_variance": 3.4048342172390726,
+      "condition": "blur_gauss_k21",
+      "family": "blur",
+      "laplacian_variance": 3.4048342172390744,
       "saturation_ratio": 0.0019490169181527205,
       "shadow_clip_ratio": 0.02602766346593507,
       "clipped_pixel_ratio": 0.027976680384087793,
@@ -85,33 +264,137 @@
       "edge_density": 0.007665752171925011,
       "brightness_mean": 116.43545381801555,
       "contrast_std": 59.275006524595966,
+      "bremola": 28.55641050628298,
       "detections": 6,
-      "mean_confidence": 0.6749649047851562,
+      "mean_confidence": 0.6749647309382757,
+      "detected_classes": "person:0.88;person:0.87;bus:0.84;person:0.81;dog:0.36;person:0.29",
+      "pseudo_label_agreement": 0.8333333333333334,
+      "lost_vs_clean": "stop sign:0.26",
+      "new_vs_clean": "dog:0.36",
       "edge_retention": 0.0408845100991934,
       "health_score": 0.44366746490883824,
       "health_state": "DEGRADED"
     },
     {
       "level": 4,
-      "condition": "strong_glare",
-      "laplacian_variance": 2789.6606231527935,
-      "saturation_ratio": 0.2000217192501143,
-      "shadow_clip_ratio": 0.03516460905349794,
-      "clipped_pixel_ratio": 0.23518632830361225,
-      "entropy": 7.267961025238037,
-      "edge_density": 0.16365912208504801,
-      "brightness_mean": 156.30463877457706,
-      "contrast_std": 77.16614602786389,
-      "detections": 7,
-      "mean_confidence": 0.5486443042755127,
-      "edge_retention": 0.8728592941233851,
-      "health_score": 0.6359022912704648,
-      "health_state": "DEGRADED"
+      "condition": "glare_gain0.35",
+      "family": "glare",
+      "laplacian_variance": 3500.0817046943016,
+      "saturation_ratio": 0.04966963877457704,
+      "shadow_clip_ratio": 0.04206904435299497,
+      "clipped_pixel_ratio": 0.09173868312757201,
+      "entropy": 7.871626853942871,
+      "edge_density": 0.18548125285779607,
+      "brightness_mean": 133.53594878829446,
+      "contrast_std": 68.57446445949051,
+      "bremola": 39.115548670705145,
+      "detections": 6,
+      "mean_confidence": 0.654596616824468,
+      "detected_classes": "person:0.87;person:0.86;bus:0.86;person:0.81;person:0.26;stop sign:0.26",
+      "pseudo_label_agreement": 1.0,
+      "lost_vs_clean": "",
+      "new_vs_clean": "",
+      "edge_retention": 0.9892454107045963,
+      "health_score": 0.9400168595729597,
+      "health_state": "OK"
     },
     {
       "level": 5,
-      "condition": "salt_pepper",
-      "laplacian_variance": 13968.222979278968,
+      "condition": "glare_gain0.70",
+      "family": "glare",
+      "laplacian_variance": 3129.935714810818,
+      "saturation_ratio": 0.11422382258802012,
+      "shadow_clip_ratio": 0.037386831275720164,
+      "clipped_pixel_ratio": 0.15161065386374029,
+      "entropy": 7.697789192199707,
+      "edge_density": 0.18041266575217194,
+      "brightness_mean": 147.41468221307727,
+      "contrast_std": 73.23928958795291,
+      "bremola": 39.418277570687415,
+      "detections": 6,
+      "mean_confidence": 0.6430750588575999,
+      "detected_classes": "person:0.87;person:0.87;person:0.81;bus:0.79;person:0.26;stop sign:0.26",
+      "pseudo_label_agreement": 1.0,
+      "lost_vs_clean": "",
+      "new_vs_clean": "",
+      "edge_retention": 0.9622126165232925,
+      "health_score": 0.8030533589237023,
+      "health_state": "OK"
+    },
+    {
+      "level": 6,
+      "condition": "glare_gain1.05",
+      "family": "glare",
+      "laplacian_variance": 2789.6606231527917,
+      "saturation_ratio": 0.2000217192501143,
+      "shadow_clip_ratio": 0.03516460905349794,
+      "clipped_pixel_ratio": 0.23518632830361225,
+      "entropy": 7.267960548400879,
+      "edge_density": 0.16365912208504801,
+      "brightness_mean": 156.30463877457706,
+      "contrast_std": 77.16614602786387,
+      "bremola": 40.38505596625201,
+      "detections": 7,
+      "mean_confidence": 0.5486442276409694,
+      "detected_classes": "person:0.89;person:0.87;person:0.82;airplane:0.45;truck:0.29;stop sign:0.27;person:0.26",
+      "pseudo_label_agreement": 0.8333333333333334,
+      "lost_vs_clean": "bus:0.87",
+      "new_vs_clean": "airplane:0.45;truck:0.29",
+      "edge_retention": 0.8728592941233851,
+      "health_score": 0.6359022912704646,
+      "health_state": "DEGRADED"
+    },
+    {
+      "level": 7,
+      "condition": "saltpepper_p0.005",
+      "family": "impulse_noise",
+      "laplacian_variance": 5736.401997725007,
+      "saturation_ratio": 0.015193187014174669,
+      "shadow_clip_ratio": 0.05647119341563786,
+      "clipped_pixel_ratio": 0.07166438042981253,
+      "entropy": 7.9306840896606445,
+      "edge_density": 0.20583561957018748,
+      "brightness_mean": 116.48735253772291,
+      "contrast_std": 68.44339892904098,
+      "bremola": 41.03295471027722,
+      "detections": 5,
+      "mean_confidence": 0.7412225127220153,
+      "detected_classes": "bus:0.87;person:0.86;person:0.84;person:0.84;person:0.30",
+      "pseudo_label_agreement": 0.8333333333333334,
+      "lost_vs_clean": "stop sign:0.26",
+      "new_vs_clean": "",
+      "edge_retention": 1.097803356846296,
+      "health_score": 0.8323957824022107,
+      "health_state": "OK"
+    },
+    {
+      "level": 8,
+      "condition": "saltpepper_p0.010",
+      "family": "impulse_noise",
+      "laplacian_variance": 7809.650785636281,
+      "saturation_ratio": 0.01757201646090535,
+      "shadow_clip_ratio": 0.05874256973022405,
+      "clipped_pixel_ratio": 0.07631458619112941,
+      "entropy": 7.929886341094971,
+      "edge_density": 0.2215294924554184,
+      "brightness_mean": 116.5345816186557,
+      "contrast_std": 68.86619364172577,
+      "bremola": 41.414402842914456,
+      "detections": 5,
+      "mean_confidence": 0.7191448628902435,
+      "detected_classes": "person:0.86;person:0.82;bus:0.82;person:0.81;person:0.28",
+      "pseudo_label_agreement": 0.8333333333333334,
+      "lost_vs_clean": "stop sign:0.26",
+      "new_vs_clean": "",
+      "edge_retention": 1.1815050328307617,
+      "health_score": 0.7492602849139633,
+      "health_state": "OK"
+    },
+    {
+      "level": 9,
+      "condition": "saltpepper_p0.025",
+      "family": "impulse_noise",
+      "laplacian_variance": 13968.222979278966,
       "saturation_ratio": 0.024937128486511202,
       "shadow_clip_ratio": 0.06547439414723365,
       "clipped_pixel_ratio": 0.09041152263374486,
@@ -119,8 +402,13 @@
       "edge_density": 0.2609670781893004,
       "brightness_mean": 116.70653177869227,
       "contrast_std": 70.13543454051131,
+      "bremola": 40.53302754384889,
       "detections": 6,
-      "mean_confidence": 0.5969247817993164,
+      "mean_confidence": 0.5969249457120895,
+      "detected_classes": "person:0.86;person:0.81;person:0.79;bus:0.57;dog:0.30;person:0.25",
+      "pseudo_label_agreement": 0.8333333333333334,
+      "lost_vs_clean": "stop sign:0.26",
+      "new_vs_clean": "dog:0.30",
       "edge_retention": 1.3918413880980107,
       "health_score": 0.6288028717781109,
       "health_state": "DEGRADED"

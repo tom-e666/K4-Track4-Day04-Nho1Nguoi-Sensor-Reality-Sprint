@@ -1,134 +1,64 @@
 # 3–5 Minute Pitch — Camera Degradation Health Score
 
-## 0:00–0:40 — Problem
+Order: problem → method → benchmark → failure case → decision. Every number below is in `results/metrics.csv` or `results/summary.json`; open them when asked.
 
-Our question is not simply **“Does the detector still output boxes?”**
+## 0:00–0:35 — Problem
 
-For an ADAS camera, blur, glare, contamination or noise can damage the input itself. If we only watch detector confidence, the system may not know that the camera has become unreliable.
+ADAS forward camera, object detection feeding AEB/ACC-type functions.
 
-Corruption benchmarks support this concern. Dong et al. tested 27 autonomous-driving corruptions on KITTI-C, nuScenes-C and Waymo-C, and RoboBEV later studied eight camera corruption/failure types across 33 BEV models.
+Blur, glare and sensor noise damage the camera input itself. If we only watch detector confidence, the system may not know the camera has become unreliable.
 
-So our small engineering question is:
+Sources: Dong et al. (CVPR 2023) tested 27 corruptions on KITTI-C/nuScenes-C/Waymo-C. RoboBEV (TPAMI 2025) tested 8 camera corruptions × 3 severities on 33 BEV models. Both report clear robustness loss. These are their numbers, not ours.
 
-**Can we monitor camera health independently of the detector?**
+**Our question: can we monitor camera health independently of the detector, and where does that monitor fail?**
 
----
+## 0:35–1:20 — Method
 
-## 0:40–1:20 — Method
+- One public street image. Nine corruptions from the same baseline, one factor at a time:
+  - Gaussian blur, kernels 5 / 11 / 21;
+  - glare gain 0.35 / 0.70 / 1.05;
+  - salt-and-pepper 0.5% / 1% / 2.5%, seed 19.
+- Health signals: Laplacian variance, edge retention, highlight clipping, brightness, contrast and entropy, combined into a health score with threshold 0.65.
+- We also **ran the BREMOLA paper's own code** (Vehicles 2025, pinned commit), a no-reference blur metric.
+- YOLOv8n: count, mean confidence, and agreement with its own clean-image boxes. **Not recall.** We have no ground truth.
 
-We use one public road image and create five controlled corruptions:
+## 1:20–2:30 — Benchmark results
 
-- Gaussian blur with kernels 5, 11 and 21
-- strong glare / local over-exposure
-- salt-and-pepper noise
+**Blur k=21.** Laplacian falls 3619 → 3.4 (−99.9%), and edge retention falls to 4%. Health is 0.44, DEGRADED. Yet mean confidence *rises* 0.656 → 0.675. Why? The detector lost a "stop sign 0.26" and invented a "dog 0.36". Same count, wrong box, higher average.
 
-For each image we compute lightweight health signals:
+**Light noise, 0.5%.** The only change is that a weak box disappears, and mean confidence jumps +13%. Mean confidence moves for reasons unrelated to image health.
 
-- Laplacian variance
-- edge retention
-- brightness and contrast
-- highlight/shadow clipping
-- entropy
+**BREMOLA** catches blur onset (−25% at k=5) but stays flat from k=5 to k=21. It *rises* under glare and noise, which matches the paper's own blur-only scope.
 
-Then we combine sharpness, edges, brightness, contrast and clipping into an interpretable health score.
+## 2:30–3:30 — Failure case: glare
 
-Separately, we run YOLOv8n and record only two proxy values:
+At glare gain 1.05:
+- saturated pixels rise from 1.3% to 20%;
+- the detector **loses the bus (0.87)** and outputs "airplane 0.45" and "truck 0.29";
+- our health score is 0.636, just under the threshold.
 
-- number of detections
-- mean confidence
+At gain 0.70, 11% of pixels are saturated and our score says **OK (0.80)**.
 
-We do **not** call these mAP or recall because we have no ground-truth annotations.
+Why: clipping has weight 0.25, so glare alone can never pull the score below 0.75. A global average hides a regional fault.
 
----
+To be honest about the process: we set the weights after the first run, then froze them. The new mild levels are out-of-sample, and the rule missed two of them. *(Hypothesis)* For AEB, a lead vehicle flipping class at that moment could change the braking decision. We did not test a tracker or planner.
 
-## 1:20–2:30 — Result
+## 3:30–4:20 — Engineering decision
 
-The most interesting result is the strong blur case.
+1. Do not use detector confidence as the camera-health signal.
+2. Add a **glare-specific saturation rule** beside the composite score.
+3. Require **3 consecutive bad frames**. On our synthetic sequence, transient alarms go from 3 to 0 at a cost of 2 frames of latency (~67 ms at 30 fps).
+4. Replace the clean reference, which a car never has, with a rolling healthy-frame reference.
 
-On the clean image:
+On a persistent fault: log the event, down-weight camera in fusion, and request a safer mode. Radar or LiDAR can support fallback. We do **not** implement fusion or control.
 
-- Laplacian variance is **3619**
-- edge retention is **100%**
-- YOLO mean confidence is **0.656**
+Next round we measure:
+- flag rate per glare level on 20+ images;
+- the policy on real video with labelled fault intervals;
+- real recall on a labelled nuScenes-C slice.
 
-With blur kernel 21:
+## 4:20–4:40 — Closing
 
-- Laplacian falls to **3.4**, about **99.91% lower**
-- edge retention falls to only **4.09%**
-- our health score becomes **0.444 — DEGRADED**
+> A camera can be badly degraded while the detector looks just as confident, and our own global health score can miss regional glare.
 
-But YOLO mean confidence actually rises to **0.675**, around **3% higher**, and the detector still outputs 6 boxes.
-
-So detector confidence alone would not tell us that the camera image has lost most of its high-frequency structure.
-
-Glare shows another failure mode:
-
-- highlight saturation jumps from **1.27% to 20.00%**
-- mean confidence drops by about **16.3%**
-- but detection count changes from 6 to 7
-- and in the saved overlay YOLO adds a large, visibly implausible **“airplane 0.45”** box over the bus/glare region
-
-Again, raw detection count is not a quality metric.
-
-Noise gives the opposite problem: it creates fake high-frequency structure.
-
-- Laplacian becomes about **3.86× larger than clean**
-- edge retention becomes **139%**
-
-So a rule such as “high Laplacian means healthy” would also fail.
-
----
-
-## 2:30–3:20 — Failure case and research connection
-
-This is why we use a multi-signal health monitor.
-
-The BREMOLA paper in *Vehicles 2025* is directly relevant. It proposes a no-reference image-quality metric for autonomous-driving blur using Fourier information and a Laplacian complexity term. Its Table 2 reports Laplacian as the best correlated high-pass filter in their comparison, with SROCC **0.9236**.
-
-But BREMOLA explicitly focuses on blur; glare and noise are outside its main scope.
-
-RoboBEV also shows the broader lesson: simple image-distribution changes do not necessarily track downstream perception damage.
-
-So our conclusion is not “Laplacian solves camera health.”
-
-Our conclusion is:
-
-**Laplacian is useful, but camera health needs multiple independent signals.**
-
----
-
-## 3:20–4:00 — Engineering decision
-
-For the demo we use:
-
-**health score below 0.65 for 3 consecutive frames → CAMERA DEGRADED**
-
-The threshold is only a lab heuristic.
-
-On a real vehicle we would also log:
-
-- exposure time
-- gain / ISO
-- shutter
-- auto-exposure state
-- frame timestamp
-- brightness/clipping signals
-- camera temperature and diagnostics where available
-
-When degradation persists, the vehicle should raise a health event, down-weight camera evidence in fusion, and request a safer operating mode.
-
-If Radar or LiDAR is available, those independent sensors can support fallback.
-
-We are **not claiming that this repository implements sensor fusion or a production safety controller**.
-
----
-
-## 4:00–4:20 — Closing
-
-The key result is simple:
-
-> A camera can be severely degraded while a detector still looks confident.
-
-That is why sensor health should be monitored **before and independently from perception confidence**.
-
-All numbers, plots, degraded images, detector overlays, paper references and reproducibility metadata are committed in the repository.
+Monitor sensor health before, and independently of, perception confidence, and test the monitor on levels it was not tuned on.

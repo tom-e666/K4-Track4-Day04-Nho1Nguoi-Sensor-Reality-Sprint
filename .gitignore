@@ -3,3 +3,6 @@ __pycache__/
 .pytest_cache/
 *.pyc
 yolov8n.pt
+assets/
+third_party/
+results-smoke/

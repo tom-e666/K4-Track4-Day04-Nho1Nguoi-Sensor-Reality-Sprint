@@ -30,11 +30,15 @@ jobs:
         run: |
           mkdir -p assets
           curl -L --fail --retry 3 "https://ultralytics.com/images/bus.jpg" -o assets/bus.jpg
+      - name: Fetch BREMOLA no-reference IQA at pinned commit
+        run: |
+          git clone https://github.com/woongchan789/BREMOLA third_party/BREMOLA
+          git -C third_party/BREMOLA checkout 7ba26999c265692bb8e44c5a3f2d91c06746830f
       - name: Run tests and benchmark
         run: |
           pytest -q
           rm -rf results
-          python src/run_demo.py --input assets/bus.jpg --source-url "https://ultralytics.com/images/bus.jpg" --yolo --output-dir results
+          python src/run_demo.py --input assets/bus.jpg --source-url "https://ultralytics.com/images/bus.jpg" --yolo --bremola-script third_party/BREMOLA/bremola.py --output-dir results
       - name: Upload benchmark artifact
         uses: actions/upload-artifact@v4
         with:
