@@ -129,7 +129,7 @@ At blur k=21, Laplacian variance falls from **3619.17 → 3.40** (about **99.91%
 That is the strongest result of this demo: a downstream model can remain confident on the subset of predictions it emits even though low-level image structure has collapsed.
 
 **Observation B — glare is a different failure mode from blur.**  
-Strong glare raises highlight-saturated pixels from **1.27% → 20.00%** (~15.7×) and total clipped pixels from **6.69% → 23.52%**. Mean YOLO confidence drops by **16.3%** (0.656 → 0.549), while raw detection count changes **6 → 7**. More detections do not imply better detection.
+Strong glare raises highlight-saturated pixels from **1.27% → 20.00%** (~15.7×) and total clipped pixels from **6.69% → 23.52%**. Mean YOLO confidence drops by **16.3%** (0.656 → 0.549), while raw detection count changes **6 → 7**. More detections do not imply better detection. Qualitative inspection of the committed overlay shows a new large **“airplane 0.45”** prediction spanning the bus/glare region, a visibly implausible class for this scene.
 
 **Observation C — naive “sharpness = health” fails under impulse noise.**  
 Salt-and-pepper noise makes Laplacian variance approximately **3.86× higher** than clean and edge retention reaches **139.2%**, even though the image is corrupted. The symmetric similarity design prevents this high-frequency artifact from being interpreted as “super healthy.”
@@ -138,7 +138,8 @@ Salt-and-pepper noise makes Laplacian variance approximately **3.86× higher** t
 
 - **Figure A — Health proxies:** `results/degradation_metrics.png`
 - **Figure B — Detector proxy:** `results/detector_proxy.png`
-- **Figure C — Clean vs strong glare:** `results/before_after.png`
+- **Figure C — Clean vs strong glare input:** `results/before_after.png`
+- **Figure D — YOLO clean vs strong glare:** `results/detector_before_after.png`
 - **Detector overlays:** `results/detector_*.jpg`
 
 ---
