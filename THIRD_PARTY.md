@@ -1,20 +1,33 @@
-# Third-party assets and models
+# Third-party provenance
 
-This project keeps third-party inputs separate from the experiment code.
+Third-party inputs/models are referenced rather than treated as project-owned artifacts.
 
-## Ultralytics sample image and YOLOv8n
+## Road-scene sample
 
-The real-image benchmark downloads:
+- Runtime URL: https://ultralytics.com/images/bus.jpg
+- Purpose: tiny public road/street-scene input for the real-image benchmark.
+- Storage policy: downloaded by GitHub Actions at benchmark time; the source file itself is not committed.
+- Reproducibility: `results/summary.json` records the source URL and SHA-256 of the downloaded input.
 
-- Sample image: `https://ultralytics.com/images/bus.jpg`
-- Detector: Ultralytics YOLOv8n (`yolov8n.pt`), downloaded by the `ultralytics` package.
+## YOLO detector proxy
 
-Source ecosystem: https://github.com/ultralytics
+- Model: YOLOv8n pretrained weight `yolov8n.pt`
+- Python package: `ultralytics==8.4.172` for the committed benchmark workflow
+- Ecosystem/source: https://github.com/ultralytics/ultralytics
+- Package: https://pypi.org/project/ultralytics/
+- License note: Ultralytics publishes open-source software under AGPL-3.0 alongside commercial licensing options. Check upstream terms for your own deployment scenario.
+- Storage policy: the weight is downloaded at runtime and not committed.
+- Reproducibility: `results/summary.json` records package version and the local weight SHA-256 when available.
 
-Ultralytics publishes its open-source software/assets under AGPL-3.0 alongside commercial licensing options. The sample image and detector are used here only as a lightweight demonstration/benchmark input. Generated experiment artifacts record this provenance.
+## Research papers
 
-The repository does **not** claim ownership of the source sample image or pretrained model.
+Paper PDFs are **not copied into this repository**. Stable DOI/official-paper/code URLs and full citations are stored in:
+
+- `docs/research.md`
+- `REFERENCES.bib`
+
+This keeps the repository lightweight and avoids implying ownership of external publications.
 
 ## Claim boundary
 
-YOLO detection count and mean confidence are used as **downstream proxy signals** only. They are not mAP, recall, missed-detection rate, or a safety validation.
+YOLO detection count and mean confidence are used only as **downstream proxy signals**. They are not mAP, recall, missed-detection rate, or safety validation.
