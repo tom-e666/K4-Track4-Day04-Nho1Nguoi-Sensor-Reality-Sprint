@@ -2,15 +2,21 @@ name: Deploy static report to Pages
 on:
   push:
     branches: ["main"]
-    paths: ["docs/**", ".github/workflows/pages.yml"]
+    paths:
+      - "docs/**"
+      - "results/**"
+      - ".github/workflows/pages.yml"
   workflow_dispatch:
+
 permissions:
   contents: read
   pages: write
   id-token: write
+
 concurrency:
   group: pages
   cancel-in-progress: true
+
 jobs:
   deploy:
     environment:
@@ -19,8 +25,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Stage benchmark evidence for the static site
+        run: |
+          rm -rf docs/results
+          mkdir -p docs/results
+          if [ -d results ]; then cp -R results/. docs/results/; fi
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: docs
       - name: Deploy
