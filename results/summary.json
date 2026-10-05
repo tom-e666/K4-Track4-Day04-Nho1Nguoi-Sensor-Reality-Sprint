@@ -1,14 +1,26 @@
 {
   "input": "bus.jpg",
-  "detector": "YOLOv8n",
-  "health_score_formula": {
-    "sharpness_similarity": 0.35,
-    "edge_similarity": 0.2,
-    "brightness_similarity": 0.15,
-    "contrast_similarity": 0.15,
-    "clipping_quality": 0.15
+  "input_source_url": "https://ultralytics.com/images/bus.jpg",
+  "input_sha256": "c02019c4979c191eb739ddd944445ef408dad5679acab6fd520ef9d434bfbc63",
+  "detector": {
+    "name": "YOLOv8n",
+    "ultralytics_version": "8.4.172",
+    "weight_file": "yolov8n.pt",
+    "weight_sha256": "f59b3d833e2ff32e194b5bb8e08d211dc7c5bdf144b90d2c8412c47ccfc83b36"
   },
-  "policy_demo_only": "health_score < 0.40 for 3 consecutive frames -> DEGRADED",
+  "runtime_provenance": {
+    "github_run_id": "37268361721",
+    "github_sha": "0adefc85edb414ad3a3ae7eea049d7e868525008",
+    "github_repository": "tom-e666/vin20kday19aisensor"
+  },
+  "health_score_formula": {
+    "sharpness_similarity": 0.4,
+    "edge_similarity": 0.15,
+    "brightness_similarity": 0.1,
+    "contrast_similarity": 0.1,
+    "clipping_quality": 0.25
+  },
+  "policy_demo_only": "health_score < 0.65 for 3 consecutive frames -> DEGRADED",
   "claim_boundary": "Health score is a heuristic proxy; detector confidence is not mAP/recall.",
   "rows": [
     {
@@ -25,7 +37,8 @@
       "detections": 6,
       "mean_confidence": 0.6555636525154114,
       "edge_retention": 1.0,
-      "health_score": 1.0
+      "health_score": 1.0,
+      "health_state": "OK"
     },
     {
       "level": 1,
@@ -41,7 +54,8 @@
       "detections": 6,
       "mean_confidence": 0.6532925367355347,
       "edge_retention": 0.47759765398755055,
-      "health_score": 0.5483005838260765
+      "health_score": 0.5290889986697889,
+      "health_state": "DEGRADED"
     },
     {
       "level": 2,
@@ -57,7 +71,8 @@
       "detections": 6,
       "mean_confidence": 0.6620054244995117,
       "edge_retention": 0.1522225541539906,
-      "health_score": 0.467917104055696
+      "health_score": 0.4650825035249326,
+      "health_state": "DEGRADED"
     },
     {
       "level": 3,
@@ -73,7 +88,8 @@
       "detections": 6,
       "mean_confidence": 0.6749649047851562,
       "edge_retention": 0.0408845100991934,
-      "health_score": 0.4392438902518707
+      "health_score": 0.44366746490883824,
+      "health_state": "DEGRADED"
     },
     {
       "level": 4,
@@ -89,7 +105,8 @@
       "detections": 7,
       "mean_confidence": 0.5486443042755127,
       "edge_retention": 0.8728592941233851,
-      "health_score": 0.7036218171543999
+      "health_score": 0.6359022912704648,
+      "health_state": "DEGRADED"
     },
     {
       "level": 5,
@@ -105,7 +122,8 @@
       "detections": 6,
       "mean_confidence": 0.5969247817993164,
       "edge_retention": 1.3918413880980107,
-      "health_score": 0.6618858824627745
+      "health_score": 0.6288028717781109,
+      "health_state": "DEGRADED"
     }
   ]
 }
