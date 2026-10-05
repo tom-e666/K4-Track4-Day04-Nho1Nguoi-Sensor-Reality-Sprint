@@ -1,7 +1,11 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
 jobs:
-  test:
+  smoke:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -10,8 +14,8 @@ jobs:
           python-version: "3.11"
       - run: pip install -r requirements.txt
       - run: pytest -q
-      - run: python src/run_demo.py
+      - run: python src/run_demo.py --output-dir results-smoke
       - uses: actions/upload-artifact@v4
         with:
-          name: sensor-health-results
-          path: results/
+          name: synthetic-smoke-results
+          path: results-smoke/
